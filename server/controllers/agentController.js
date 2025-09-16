@@ -1,6 +1,8 @@
 // agentController.js
 const { analyzeLog, runAgentQuery } = require("../services/aiService.js");
+const Log = require("../models/log.js"); // <-- import Log model
 
+// Analyze logs and save result to MongoDB
 async function analyzeLogController(req, res) {
   const { logContent } = req.body;
 
@@ -12,12 +14,21 @@ async function analyzeLogController(req, res) {
 
   try {
     const analysis = await analyzeLog(logContent);
-    res.json({ success: true, analysis });
+
+    // Save to MongoDB Atlas
+    const newLog = await Log.create({
+      content: logContent,
+      analysis,
+    });
+
+    res.json({ success: true, log: newLog });
   } catch (error) {
+    console.error("Error in analyzeLogController:", error.message);
     res.status(500).json({ error: error.message });
   }
 }
 
+// Run agent queries (no DB persistence here, just AI response)
 async function runAgent(req, res) {
   try {
     const { prompt } = req.body;
